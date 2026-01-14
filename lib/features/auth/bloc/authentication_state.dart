@@ -10,11 +10,11 @@ class AuthenticationState extends Equatable {
 
   const AuthenticationState.unauthenticated() : this._(status: AuthStatus.unauthenticated);
 
-  const AuthenticationState.authenticated(AuthUser user)
+  const AuthenticationState.authenticated(AuthAppUser user)
       : this._(status: AuthStatus.authenticated, user: user);
 
   final AuthStatus status;
-  final AuthUser? user;
+  final AuthAppUser? user;
 
   bool get isAuthenticated => status == AuthStatus.authenticated && user != null;
 

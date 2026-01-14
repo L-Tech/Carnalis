@@ -11,7 +11,7 @@ class SupabaseAuthRepository implements AuthRepository {
         ? const AuthStateSnapshot(status: AuthStatus.unauthenticated)
         : AuthStateSnapshot(
             status: AuthStatus.authenticated,
-            user: AuthUser(id: initialUser.id, email: initialUser.email, phone: initialUser.phone),
+            user: AuthAppUser(id: initialUser.id, email: initialUser.email, phone: initialUser.phone),
           );
 
     _sub = _client.auth.onAuthStateChange.listen((data) {
@@ -21,7 +21,7 @@ class SupabaseAuthRepository implements AuthRepository {
       } else {
         _current = AuthStateSnapshot(
           status: AuthStatus.authenticated,
-          user: AuthUser(id: user.id, email: user.email, phone: user.phone),
+          user: AuthAppUser(id: user.id, email: user.email, phone: user.phone),
         );
       }
       _controller.add(_current);

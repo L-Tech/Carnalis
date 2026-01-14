@@ -4,8 +4,8 @@ import 'package:equatable/equatable.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
-class AuthUser extends Equatable {
-  const AuthUser({
+class AuthAppUser extends Equatable {
+  const AuthAppUser({
     required this.id,
     this.email,
     this.phone,
@@ -26,7 +26,7 @@ class AuthStateSnapshot extends Equatable {
   });
 
   final AuthStatus status;
-  final AuthUser? user;
+  final AuthAppUser? user;
 
   @override
   List<Object?> get props => [status, user];

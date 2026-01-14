@@ -98,7 +98,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     final authState = context.watch<AuthenticationBloc>().state;
 
     if (!authState.isAuthenticated) {
-      return const Scaffold(
+      return Scaffold(
         appBar: AppBar(title: Text('Login')),
         body: AuthGate(),
       );

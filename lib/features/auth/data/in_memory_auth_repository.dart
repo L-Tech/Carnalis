@@ -34,7 +34,7 @@ class InMemoryAuthRepository implements AuthRepository {
     _emit(
       AuthStateSnapshot(
         status: AuthStatus.authenticated,
-        user: AuthUser(id: 'mock-user', email: email),
+        user: AuthAppUser(id: 'mock-user', email: email),
       ),
     );
   }
@@ -52,7 +52,7 @@ class InMemoryAuthRepository implements AuthRepository {
     _emit(
       AuthStateSnapshot(
         status: AuthStatus.authenticated,
-        user: AuthUser(id: 'mock-oauth-$provider'),
+        user: AuthAppUser(id: 'mock-oauth-$provider'),
       ),
     );
   }
@@ -62,7 +62,7 @@ class InMemoryAuthRepository implements AuthRepository {
     _emit(
       AuthStateSnapshot(
         status: AuthStatus.authenticated,
-        user: AuthUser(id: 'mock-phone', phone: phone),
+        user: AuthAppUser(id: 'mock-phone', phone: phone),
       ),
     );
   }

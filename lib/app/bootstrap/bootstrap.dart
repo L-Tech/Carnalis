@@ -2,7 +2,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/app_config.dart';
 import 'app_bootstrap.dart';
-import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/data/in_memory_auth_repository.dart';
 import '../../features/auth/data/supabase_auth_repository.dart';
 
