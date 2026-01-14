@@ -1,12 +1,97 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../auth/bloc/authentication_bloc.dart';
 import '../../auth/view/auth_gate.dart';
 import '../../auth/data/auth_repository.dart';
 
-class ProfileCreationScreen extends StatelessWidget {
+class ProfileCreationScreen extends StatefulWidget {
   const ProfileCreationScreen({super.key});
+
+  @override
+  State<ProfileCreationScreen> createState() => _ProfileCreationScreenState();
+}
+
+class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
+  final _picker = ImagePicker();
+
+  final _nameCtrl = TextEditingController();
+  final _bioCtrl = TextEditingController();
+
+  final List<Uint8List?> _photos = List<Uint8List?>.filled(9, null);
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _bioCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickPhoto(int index, ImageSource source) async {
+    try {
+      final file = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1600,
+      );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      setState(() => _photos[index] = bytes);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Falha ao selecionar foto: $e')),
+      );
+    }
+  }
+
+  void _showPickSheet(int index) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Galeria'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickPhoto(index, ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('Câmera'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickPhoto(index, ImageSource.camera);
+                  },
+                ),
+                if (_photos[index] != null)
+                  ListTile(
+                    leading: const Icon(Icons.delete_outline),
+                    title: const Text('Remover foto'),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      setState(() => _photos[index] = null);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +120,18 @@ class ProfileCreationScreen extends StatelessWidget {
         children: [
           const _SectionTitle(
             title: 'Fotos (até 9)',
-            subtitle: 'Toque em um slot para adicionar (placeholder)',
+            subtitle: 'Toque em um slot para adicionar',
           ),
           const SizedBox(height: 12),
-          const _PhotoGridPlaceholder(),
+          _PhotoGrid(
+            photos: _photos,
+            onTapSlot: _showPickSheet,
+          ),
           const SizedBox(height: 24),
           const _SectionTitle(title: 'Biografia', subtitle: 'Conte sobre você'),
           const SizedBox(height: 12),
           TextField(
+            controller: _bioCtrl,
             maxLines: 4,
             decoration: const InputDecoration(
               hintText: 'Escreva sua bio…',
@@ -87,7 +176,10 @@ class ProfileCreationScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const _SectionTitle(title: 'Informações básicas', subtitle: ''),
           const SizedBox(height: 12),
-          TextField(decoration: const InputDecoration(labelText: 'Nome')),
+          TextField(
+            controller: _nameCtrl,
+            decoration: const InputDecoration(labelText: 'Nome'),
+          ),
           const SizedBox(height: 12),
           TextField(
             decoration: const InputDecoration(
@@ -133,8 +225,18 @@ class ProfileCreationScreen extends StatelessWidget {
           const _DistanceSlider(),
           const SizedBox(height: 24),
           FilledButton(
-            onPressed: () {},
-            child: const Text('Salvar perfil (placeholder)'),
+            onPressed: () {
+              final filled = _photos.whereType<Uint8List>().length;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Salvar (placeholder): ${_nameCtrl.text.trim().isEmpty ? "Sem nome" : _nameCtrl.text.trim()} '
+                    '• ${filled}/9 fotos selecionadas',
+                  ),
+                ),
+              );
+            },
+            child: const Text('Salvar perfil'),
           ),
           const SizedBox(height: 12),
           Text(
@@ -184,8 +286,14 @@ class _ChipButton extends StatelessWidget {
   }
 }
 
-class _PhotoGridPlaceholder extends StatelessWidget {
-  const _PhotoGridPlaceholder();
+class _PhotoGrid extends StatelessWidget {
+  const _PhotoGrid({
+    required this.photos,
+    required this.onTapSlot,
+  });
+
+  final List<Uint8List?> photos;
+  final void Function(int index) onTapSlot;
 
   @override
   Widget build(BuildContext context) {
@@ -199,8 +307,9 @@ class _PhotoGridPlaceholder extends StatelessWidget {
         mainAxisSpacing: 10,
       ),
       itemBuilder: (context, index) {
+        final bytes = photos[index];
         return InkWell(
-          onTap: () {},
+          onTap: () => onTapSlot(index),
           borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: BoxDecoration(
@@ -210,7 +319,12 @@ class _PhotoGridPlaceholder extends StatelessWidget {
                 color: Theme.of(context).colorScheme.secondary.withOpacity(0.35),
               ),
             ),
-            child: const Center(child: Icon(Icons.add_a_photo_outlined)),
+            child: bytes == null
+                ? const Center(child: Icon(Icons.add_a_photo_outlined))
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(bytes, fit: BoxFit.cover),
+                  ),
           ),
         );
       },
