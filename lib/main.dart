@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'app/app.dart';
+import 'app/bootstrap/bootstrap.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const CarnalisApp());
+  final boot = await bootstrap();
+  runApp(CarnalisApp(authRepository: boot.authRepository));
 }

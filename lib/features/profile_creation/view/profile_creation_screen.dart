@@ -1,31 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../auth/bloc/authentication_bloc.dart';
+import '../../auth/view/auth_gate.dart';
+import '../../auth/data/auth_repository.dart';
 
 class ProfileCreationScreen extends StatelessWidget {
   const ProfileCreationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthenticationBloc>().state;
+
+    if (!authState.isAuthenticated) {
+      return const Scaffold(
+        appBar: AppBar(title: Text('Login')),
+        body: AuthGate(),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Criação de perfil')),
+      appBar: AppBar(
+        title: const Text('Criação de perfil'),
+        actions: [
+          IconButton(
+            tooltip: 'Sair',
+            onPressed: () => context.read<AuthRepository>().signOut(),
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SectionTitle(
-            title: 'Login',
-            subtitle: 'SSO e autenticação (placeholder nesta fase)',
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: const [
-              _AuthButton(label: 'Google', icon: Icons.g_mobiledata),
-              _AuthButton(label: 'Apple', icon: Icons.apple),
-              _AuthButton(label: 'Facebook', icon: Icons.facebook),
-              _AuthButton(label: 'Telefone', icon: Icons.phone),
-            ],
-          ),
-          const SizedBox(height: 24),
           const _SectionTitle(
             title: 'Fotos (até 9)',
             subtitle: 'Toque em um slot para adicionar (placeholder)',
@@ -131,7 +138,7 @@ class ProfileCreationScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Nesta etapa, a tela é um esqueleto de UI. No próximo passo, conecto BLoC + Supabase.',
+            'Tela em construção: próximos passos incluem persistência no Supabase e upload real das fotos.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -157,22 +164,6 @@ class _SectionTitle extends StatelessWidget {
           Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
         ],
       ],
-    );
-  }
-}
-
-class _AuthButton extends StatelessWidget {
-  const _AuthButton({required this.label, required this.icon});
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: () {},
-      icon: Icon(icon),
-      label: Text(label),
     );
   }
 }

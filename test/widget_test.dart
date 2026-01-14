@@ -8,10 +8,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:carnalis_app/app/app.dart';
+import 'package:carnalis_app/features/auth/data/in_memory_auth_repository.dart';
 
 void main() {
   testWidgets('App renders discovery tab', (WidgetTester tester) async {
-    await tester.pumpWidget(const CarnalisApp());
+    await tester.pumpWidget(CarnalisApp(authRepository: InMemoryAuthRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('Descoberta'), findsOneWidget);

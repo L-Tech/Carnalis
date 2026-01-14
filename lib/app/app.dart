@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'shell/app_shell.dart';
+import '../features/auth/bloc/authentication_bloc.dart';
+import '../features/auth/data/auth_repository.dart';
 
 class CarnalisApp extends StatelessWidget {
-  const CarnalisApp({super.key});
+  const CarnalisApp({
+    super.key,
+    required this.authRepository,
+  });
+
+  final AuthRepository authRepository;
 
   static const Color _primary = Color(0xFFFF0000);
   static const Color _secondary = Color(0xFF722F37);
@@ -21,40 +29,46 @@ class CarnalisApp extends StatelessWidget {
       onSurface: _text,
     );
 
-    return MaterialApp(
-      title: 'Carnalis',
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      theme: ThemeData(
-        colorScheme: colorScheme,
-        scaffoldBackgroundColor: _background,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: _background,
-          foregroundColor: _text,
-          centerTitle: true,
-        ),
-        textTheme: ThemeData.dark().textTheme.apply(
-              bodyColor: _text,
-              displayColor: _text,
+    return RepositoryProvider<AuthRepository>.value(
+      value: authRepository,
+      child: BlocProvider(
+        create: (context) => AuthenticationBloc(authRepository: authRepository),
+        child: MaterialApp(
+          title: 'Carnalis',
+          debugShowCheckedModeBanner: false,
+          themeMode: ThemeMode.dark,
+          theme: ThemeData(
+            colorScheme: colorScheme,
+            scaffoldBackgroundColor: _background,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: _background,
+              foregroundColor: _text,
+              centerTitle: true,
             ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF111111),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: _secondary.withOpacity(0.35)),
+            textTheme: ThemeData.dark().textTheme.apply(
+                  bodyColor: _text,
+                  displayColor: _text,
+                ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: const Color(0xFF111111),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _secondary.withOpacity(0.35)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _secondary.withOpacity(0.35)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _primary, width: 2),
+              ),
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: _secondary.withOpacity(0.35)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _primary, width: 2),
-          ),
+          home: const AppShell(),
         ),
       ),
-      home: const AppShell(),
     );
   }
 }
