@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'shell/app_shell.dart';
+
 class CarnalisApp extends StatelessWidget {
   const CarnalisApp({super.key});
 
@@ -40,11 +42,11 @@ class CarnalisApp extends StatelessWidget {
           fillColor: const Color(0xFF111111),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: _secondary.withValues(alpha: 0.35)),
+            borderSide: BorderSide(color: _secondary.withOpacity(0.35)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: _secondary.withValues(alpha: 0.35)),
+            borderSide: BorderSide(color: _secondary.withOpacity(0.35)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -52,22 +54,7 @@ class CarnalisApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const _PlaceholderHome(),
-    );
-  }
-}
-
-class _PlaceholderHome extends StatelessWidget {
-  const _PlaceholderHome();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Text('Carnalis — base inicial (UI/BLoC em construção)'),
-        ),
-      ),
+      home: const AppShell(),
     );
   }
 }
