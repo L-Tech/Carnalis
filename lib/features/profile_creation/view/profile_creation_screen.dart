@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../auth/bloc/authentication_bloc.dart';
 import '../../auth/view/auth_gate.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../profile/bloc/profile_cubit.dart';
+import '../../profile/data/profile_repository.dart';
 
 class ProfileCreationScreen extends StatefulWidget {
   const ProfileCreationScreen({super.key});
@@ -22,12 +24,23 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
   final _bioCtrl = TextEditingController();
 
   final List<Uint8List?> _photos = List<Uint8List?>.filled(9, null);
+  ProfileCubit? _profileCubit;
 
   @override
   void dispose() {
+    _profileCubit?.close();
     _nameCtrl.dispose();
     _bioCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _profileCubit ??= ProfileCubit(
+      profileRepository: context.read<ProfileRepository>(),
+      authRepository: context.read<AuthRepository>(),
+    )..load();
   }
 
   Future<void> _pickPhoto(int index, ImageSource source) async {
@@ -99,151 +112,184 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
 
     if (!authState.isAuthenticated) {
       return Scaffold(
-        appBar: AppBar(title: Text('Login')),
-        body: AuthGate(),
+        appBar: AppBar(title: const Text('Login')),
+        body: const AuthGate(),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Criação de perfil'),
-        actions: [
-          IconButton(
-            tooltip: 'Sair',
-            onPressed: () => context.read<AuthRepository>().signOut(),
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const _SectionTitle(
-            title: 'Fotos (até 9)',
-            subtitle: 'Toque em um slot para adicionar',
-          ),
-          const SizedBox(height: 12),
-          _PhotoGrid(
-            photos: _photos,
-            onTapSlot: _showPickSheet,
-          ),
-          const SizedBox(height: 24),
-          const _SectionTitle(title: 'Biografia', subtitle: 'Conte sobre você'),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _bioCtrl,
-            maxLines: 4,
-            decoration: const InputDecoration(
-              hintText: 'Escreva sua bio…',
-            ),
-          ),
-          const SizedBox(height: 24),
-          const _SectionTitle(
-            title: 'Integrações de interesses',
-            subtitle: 'Compartilhe favoritos (placeholder)',
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: const [
-              _ChipButton(label: 'Spotify', icon: Icons.music_note),
-              _ChipButton(label: 'IMDb', icon: Icons.movie),
-              _ChipButton(label: 'MyAnimeList', icon: Icons.tv),
-              _ChipButton(label: 'Steam', icon: Icons.sports_esports),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const _SectionTitle(
-            title: 'Prompts (opcional)',
-            subtitle: 'Perguntas/frases para completar',
-          ),
-          const SizedBox(height: 12),
-          const _PromptRow(
-            prompt: 'Um fato aleatório sobre mim…',
-            hint: 'Digite aqui…',
-          ),
-          const SizedBox(height: 12),
-          const _PromptRow(
-            prompt: 'Eu me amarro quando…',
-            hint: 'Digite aqui…',
-          ),
-          const SizedBox(height: 12),
-          const _PromptRow(
-            prompt: 'Meu date ideal seria…',
-            hint: 'Digite aqui…',
-          ),
-          const SizedBox(height: 24),
-          const _SectionTitle(title: 'Informações básicas', subtitle: ''),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _nameCtrl,
-            decoration: const InputDecoration(labelText: 'Nome'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            decoration: const InputDecoration(
-              labelText: 'Data de nascimento',
-              hintText: 'dd/mm/aaaa',
-              suffixIcon: Icon(Icons.calendar_today),
-            ),
-            readOnly: true,
-            onTap: () async {
-              final now = DateTime.now();
-              await showDatePicker(
-                context: context,
-                firstDate: DateTime(now.year - 100),
-                lastDate: DateTime(now.year - 18),
-                initialDate: DateTime(now.year - 21),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(labelText: 'Gênero'),
-            items: const [
-              DropdownMenuItem(value: 'homem', child: Text('Homem')),
-              DropdownMenuItem(value: 'mulher', child: Text('Mulher')),
-              DropdownMenuItem(value: 'nao_binario', child: Text('Não-binário')),
-              DropdownMenuItem(value: 'outro', child: Text('Outro')),
-            ],
-            onChanged: (_) {},
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(labelText: 'Orientação sexual'),
-            items: const [
-              DropdownMenuItem(value: 'hetero', child: Text('Hétero')),
-              DropdownMenuItem(value: 'bi', child: Text('Bissexual')),
-              DropdownMenuItem(value: 'homo', child: Text('Homossexual')),
-              DropdownMenuItem(value: 'pan', child: Text('Pansexual')),
-              DropdownMenuItem(value: 'assexual', child: Text('Assexual')),
-            ],
-            onChanged: (_) {},
-          ),
-          const SizedBox(height: 12),
-          const _DistanceSlider(),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: () {
-              final filled = _photos.whereType<Uint8List>().length;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Salvar (placeholder): ${_nameCtrl.text.trim().isEmpty ? "Sem nome" : _nameCtrl.text.trim()} '
-                    '• ${filled}/9 fotos selecionadas',
+    final cubit = _profileCubit!;
+
+    return BlocProvider.value(
+      value: cubit,
+      child: BlocListener<ProfileCubit, ProfileState>(
+        listenWhen: (p, n) => p.status != n.status,
+        listener: (context, state) {
+          if (state.status == ProfileStatus.ready && state.profile != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Perfil salvo!')),
+            );
+          }
+          if (state.status == ProfileStatus.error && state.errorMessage != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erro: ${state.errorMessage}')),
+            );
+          }
+        },
+        child: BlocBuilder<ProfileCubit, ProfileState>(
+          builder: (context, state) {
+            final saving = state.status == ProfileStatus.saving;
+
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Criação de perfil'),
+                actions: [
+                  IconButton(
+                    tooltip: 'Sair',
+                    onPressed: () => context.read<AuthRepository>().signOut(),
+                    icon: const Icon(Icons.logout),
                   ),
-                ),
-              );
-            },
-            child: const Text('Salvar perfil'),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Tela em construção: próximos passos incluem persistência no Supabase e upload real das fotos.',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+                ],
+              ),
+              body: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  const _SectionTitle(
+                    title: 'Fotos (até 9)',
+                    subtitle: 'Toque em um slot para adicionar',
+                  ),
+                  const SizedBox(height: 12),
+                  _PhotoGrid(
+                    photos: _photos,
+                    onTapSlot: _showPickSheet,
+                  ),
+                  const SizedBox(height: 24),
+                  const _SectionTitle(title: 'Biografia', subtitle: 'Conte sobre você'),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _bioCtrl,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      hintText: 'Escreva sua bio…',
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const _SectionTitle(
+                    title: 'Integrações de interesses',
+                    subtitle: 'Compartilhe favoritos (placeholder)',
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: const [
+                      _ChipButton(label: 'Spotify', icon: Icons.music_note),
+                      _ChipButton(label: 'IMDb', icon: Icons.movie),
+                      _ChipButton(label: 'MyAnimeList', icon: Icons.tv),
+                      _ChipButton(label: 'Steam', icon: Icons.sports_esports),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const _SectionTitle(
+                    title: 'Prompts (opcional)',
+                    subtitle: 'Perguntas/frases para completar',
+                  ),
+                  const SizedBox(height: 12),
+                  const _PromptRow(
+                    prompt: 'Um fato aleatório sobre mim…',
+                    hint: 'Digite aqui…',
+                  ),
+                  const SizedBox(height: 12),
+                  const _PromptRow(
+                    prompt: 'Eu me amarro quando…',
+                    hint: 'Digite aqui…',
+                  ),
+                  const SizedBox(height: 12),
+                  const _PromptRow(
+                    prompt: 'Meu date ideal seria…',
+                    hint: 'Digite aqui…',
+                  ),
+                  const SizedBox(height: 24),
+                  const _SectionTitle(title: 'Informações básicas', subtitle: ''),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _nameCtrl,
+                    decoration: const InputDecoration(labelText: 'Nome'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Data de nascimento',
+                      hintText: 'dd/mm/aaaa',
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    onTap: saving
+                        ? null
+                        : () async {
+                            final now = DateTime.now();
+                            await showDatePicker(
+                              context: context,
+                              firstDate: DateTime(now.year - 100),
+                              lastDate: DateTime(now.year - 18),
+                              initialDate: DateTime(now.year - 21),
+                            );
+                          },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(labelText: 'Gênero'),
+                    items: const [
+                      DropdownMenuItem(value: 'homem', child: Text('Homem')),
+                      DropdownMenuItem(value: 'mulher', child: Text('Mulher')),
+                      DropdownMenuItem(value: 'nao_binario', child: Text('Não-binário')),
+                      DropdownMenuItem(value: 'outro', child: Text('Outro')),
+                    ],
+                    onChanged: saving ? null : (_) {},
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(labelText: 'Orientação sexual'),
+                    items: const [
+                      DropdownMenuItem(value: 'hetero', child: Text('Hétero')),
+                      DropdownMenuItem(value: 'bi', child: Text('Bissexual')),
+                      DropdownMenuItem(value: 'homo', child: Text('Homossexual')),
+                      DropdownMenuItem(value: 'pan', child: Text('Pansexual')),
+                      DropdownMenuItem(value: 'assexual', child: Text('Assexual')),
+                    ],
+                    onChanged: saving ? null : (_) {},
+                  ),
+                  const SizedBox(height: 12),
+                  const _DistanceSlider(),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: saving
+                        ? null
+                        : () async {
+                            final photos = _photos.whereType<Uint8List>().toList();
+                            await context.read<ProfileCubit>().save(
+                                  name: _nameCtrl.text.trim(),
+                                  bio: _bioCtrl.text.trim(),
+                                  photos: photos,
+                                );
+                          },
+                    child: saving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Salvar perfil'),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Com Supabase configurado, as fotos são enviadas ao Storage e o perfil é salvo na tabela profiles.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

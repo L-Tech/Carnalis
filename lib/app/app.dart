@@ -4,14 +4,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'shell/app_shell.dart';
 import '../features/auth/bloc/authentication_bloc.dart';
 import '../features/auth/data/auth_repository.dart';
+import '../features/profile/data/profile_repository.dart';
 
 class CarnalisApp extends StatelessWidget {
   const CarnalisApp({
     super.key,
     required this.authRepository,
+    required this.profileRepository,
   });
 
   final AuthRepository authRepository;
+  final ProfileRepository profileRepository;
 
   static const Color _primary = Color(0xFFFF0000);
   static const Color _secondary = Color(0xFF722F37);
@@ -29,8 +32,11 @@ class CarnalisApp extends StatelessWidget {
       onSurface: _text,
     );
 
-    return RepositoryProvider<AuthRepository>.value(
-      value: authRepository,
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<AuthRepository>.value(value: authRepository),
+        RepositoryProvider<ProfileRepository>.value(value: profileRepository),
+      ],
       child: BlocProvider(
         create: (context) => AuthenticationBloc(authRepository: authRepository),
         child: MaterialApp(

@@ -6,5 +6,10 @@ import 'app/bootstrap/bootstrap.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final boot = await bootstrap();
-  runApp(CarnalisApp(authRepository: boot.authRepository));
+  runApp(
+    CarnalisApp(
+      authRepository: boot.authRepository,
+      profileRepository: boot.profileRepository,
+    ),
+  );
 }
