@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:carnalis_app/main.dart';
+import 'package:carnalis_app/app/app.dart';
 
 void main() {
   testWidgets('App renders discovery tab', (WidgetTester tester) async {
